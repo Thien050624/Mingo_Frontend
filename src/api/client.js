@@ -8,6 +8,11 @@ export const SESSION_EXPIRED_EVENT = "mingo:session-expired";
 // Paths that must never trigger a refresh-and-retry (avoids infinite loops).
 const AUTH_PATHS = new Set(["/auth/login", "/auth/register", "/auth/refresh"]);
 
+// Render's free tier spins the backend down after 15 min idle; the first request after
+// a sleep can fail outright (not just be slow) while the container boots back up.
+const REQUEST_TIMEOUT_MS = 20000;
+const COLD_START_RETRY_DELAY_MS = 5000;
+
 export class ApiError extends Error {
   constructor(message, status, fieldErrors) {
     super(message);
@@ -16,15 +21,34 @@ export class ApiError extends Error {
   }
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function rawFetch(path, { method, body, token }) {
   const headers = { "Content-Type": "application/json" };
   if (token) headers.Authorization = `Bearer ${token}`;
 
-  const res = await fetch(`${API_BASE}${path}`, {
-    method,
-    headers,
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  });
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+  let res;
+  try {
+    res = await fetch(`${API_BASE}${path}`, {
+      method,
+      headers,
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+      signal: controller.signal,
+    });
+  } catch (err) {
+    const message =
+      err.name === "AbortError"
+        ? "Máy chủ phản hồi quá lâu, vui lòng thử lại sau ít giây"
+        : "Máy chủ đang khởi động lại, vui lòng thử lại sau ít giây";
+    throw new ApiError(message, 0, null);
+  } finally {
+    clearTimeout(timer);
+  }
 
   const isJson = res.headers.get("content-type")?.includes("application/json");
   const data = isJson ? await res.json() : null;
@@ -68,7 +92,19 @@ export function isAuthFailure(status) {
 }
 
 export async function request(path, { method = "GET", body, token } = {}) {
-  let { res, data } = await rawFetch(path, { method, body, token });
+  let result;
+  try {
+    result = await rawFetch(path, { method, body, token });
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 0) {
+      await sleep(COLD_START_RETRY_DELAY_MS);
+      result = await rawFetch(path, { method, body, token });
+    } else {
+      throw err;
+    }
+  }
+
+  let { res, data } = result;
 
   if (isAuthFailure(res.status) && token && !AUTH_PATHS.has(path)) {
     const newToken = await refreshAccessToken();
