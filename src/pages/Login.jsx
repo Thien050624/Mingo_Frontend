@@ -6,7 +6,7 @@ import { useCurrentUser } from "../context/UserContext";
 import { useToast } from "../context/ToastContext";
 import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY } from "../api/client";
 
-const ADMIN_URL = "http://localhost:5174";
+const ADMIN_URL = import.meta.env.VITE_ADMIN_URL || "http://localhost:5174";
 
 export default function Login() {
   const { login, register } = useCurrentUser();
