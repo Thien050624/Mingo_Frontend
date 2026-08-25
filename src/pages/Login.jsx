@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaEnvelope, FaLock } from "react-icons/fa";
 import TextField from "../components/common/TextField";
@@ -7,9 +7,10 @@ import { useToast } from "../context/ToastContext";
 import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY } from "../api/client";
 
 const ADMIN_URL = (import.meta.env.VITE_ADMIN_URL || "http://localhost:5174").replace(/\/$/, "");
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
 export default function Login() {
-  const { login, register } = useCurrentUser();
+  const { login, register, loginWithGoogle } = useCurrentUser();
   const { showToast } = useToast();
   const [mode, setMode] = useState("login");
   const [email, setEmail] = useState("");
@@ -18,10 +19,22 @@ export default function Login() {
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
+  const googleButtonRef = useRef(null);
 
   const switchMode = (next) => {
     setMode(next);
     setError("");
+  };
+
+  const afterAuthenticated = (user, successMessage) => {
+    if (user.role === "ADMIN") {
+      const at = localStorage.getItem(ACCESS_TOKEN_KEY);
+      const rt = localStorage.getItem(REFRESH_TOKEN_KEY);
+      window.location.href = `${ADMIN_URL}/handoff?at=${encodeURIComponent(at)}&rt=${encodeURIComponent(rt)}`;
+      return;
+    }
+    showToast(successMessage);
+    navigate(user.onboarded ? "/" : "/onboarding");
   };
 
   const submit = async (e) => {
@@ -39,21 +52,52 @@ export default function Login() {
         mode === "register"
           ? await register(email, password)
           : await login(email, password);
-
-      if (user.role === "ADMIN") {
-        const at = localStorage.getItem(ACCESS_TOKEN_KEY);
-        const rt = localStorage.getItem(REFRESH_TOKEN_KEY);
-        window.location.href = `${ADMIN_URL}/handoff?at=${encodeURIComponent(at)}&rt=${encodeURIComponent(rt)}`;
-        return;
-      }
-      showToast(mode === "register" ? "Tạo tài khoản thành công" : "Đăng nhập thành công");
-      navigate(user.onboarded ? "/" : "/onboarding");
+      afterAuthenticated(user, mode === "register" ? "Tạo tài khoản thành công" : "Đăng nhập thành công");
     } catch (err) {
       setError(err.message || "Đã có lỗi xảy ra, vui lòng thử lại sau");
     } finally {
       setSubmitting(false);
     }
   };
+
+  const handleGoogleCredential = async (response) => {
+    setError("");
+    try {
+      const user = await loginWithGoogle(response.credential);
+      afterAuthenticated(user, "Đăng nhập thành công");
+    } catch (err) {
+      setError(err.message || "Đã có lỗi xảy ra, vui lòng thử lại sau");
+    }
+  };
+
+  useEffect(() => {
+    if (!GOOGLE_CLIENT_ID || !googleButtonRef.current) return;
+
+    const renderButton = () => {
+      window.google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: handleGoogleCredential,
+      });
+      window.google.accounts.id.renderButton(googleButtonRef.current, {
+        theme: "outline",
+        size: "large",
+        width: 336,
+        text: "continue_with",
+      });
+    };
+
+    if (window.google?.accounts?.id) {
+      renderButton();
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = "https://accounts.google.com/gsi/client";
+    script.async = true;
+    script.onload = renderButton;
+    document.head.appendChild(script);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="min-h-screen bg-zm-bg bg-noise flex items-center justify-center p-4">
@@ -173,12 +217,18 @@ export default function Login() {
             <hr className="flex-1 border-zm-border" />
           </div>
 
-          <button
-            type="button"
-            className="border border-zm-border rounded-lg py-2.5 text-sm font-semibold text-zm-text hover:bg-zm-hover transition-colors"
-          >
-            Tiếp tục với Google
-          </button>
+          {GOOGLE_CLIENT_ID ? (
+            <div ref={googleButtonRef} className="flex justify-center min-h-11" />
+          ) : (
+            <button
+              type="button"
+              disabled
+              title="Đăng nhập Google chưa được cấu hình"
+              className="border border-zm-border rounded-lg py-2.5 text-sm font-semibold text-zm-muted opacity-60 cursor-not-allowed"
+            >
+              Tiếp tục với Google
+            </button>
+          )}
 
           <p className="text-center text-xs text-zm-muted mt-6">
             {mode === "login" ? "Chưa có tài khoản? " : "Đã có tài khoản? "}

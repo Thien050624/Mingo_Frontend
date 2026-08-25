@@ -68,6 +68,16 @@ export function UserProvider({ children }) {
     return mapped;
   };
 
+  const loginWithGoogle = async (idToken) => {
+    const res = await authApi.loginWithGoogle(idToken);
+    localStorage.setItem(ACCESS_TOKEN_KEY, res.accessToken);
+    localStorage.setItem(REFRESH_TOKEN_KEY, res.refreshToken);
+    const profile = await usersApi.getMe(res.accessToken);
+    const mapped = toFrontendUser(profile);
+    setCurrentUser(mapped);
+    return mapped;
+  };
+
   const logout = () => {
     localStorage.removeItem(ACCESS_TOKEN_KEY);
     localStorage.removeItem(REFRESH_TOKEN_KEY);
@@ -112,6 +122,7 @@ export function UserProvider({ children }) {
         loading,
         login,
         register,
+        loginWithGoogle,
         logout,
         updateProfile,
         changePassword,
