@@ -5,9 +5,10 @@ import { useWebSocket } from "./WebSocketContext";
 
 const ForumContext = createContext(null);
 
-export function ForumProvider({ children }) {
+export function ForumProvider({ roomId, children }) {
   const { currentUser } = useCurrentUser();
   const { subscribe } = useWebSocket();
+  const [room, setRoom] = useState(null);
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
@@ -15,44 +16,46 @@ export function ForumProvider({ children }) {
   const [loadingOlder, setLoadingOlder] = useState(false);
 
   useEffect(() => {
-    if (!currentUser) {
+    if (!currentUser || !roomId) {
       setMessages([]);
+      setRoom(null);
       setLoading(false);
       return;
     }
-    forumApi
-      .listMessages(0, 30)
-      .then((res) => {
+    setLoading(true);
+    Promise.all([forumApi.listMessages(roomId, 0, 30), forumApi.listRooms()])
+      .then(([res, rooms]) => {
         setMessages(res.content.map(forumApi.toFrontendMessage).reverse());
         setPage(0);
         setHasMore(!res.last);
+        setRoom(rooms.map(forumApi.toFrontendRoom).find((r) => r.id === roomId) || null);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [currentUser?.id]);
+  }, [currentUser?.id, roomId]);
 
   useEffect(() => {
-    if (!currentUser) return;
-    return subscribe("/user/queue/forum-messages", (payload) => {
+    if (!currentUser || !roomId) return;
+    return subscribe(`/topic/forum-rooms/${roomId}/messages`, (payload) => {
       const mapped = forumApi.toFrontendMessage(payload);
       setMessages((prev) => (prev.some((m) => m.id === mapped.id) ? prev : [...prev, mapped]));
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUser?.id]);
+  }, [currentUser?.id, roomId]);
 
   useEffect(() => {
-    if (!currentUser) return;
-    return subscribe("/user/queue/forum-likes", (payload) => {
+    if (!currentUser || !roomId) return;
+    return subscribe(`/topic/forum-rooms/${roomId}/likes`, (payload) => {
       setMessages((prev) =>
         prev.map((m) => (m.id === payload.messageId ? { ...m, likedBy: payload.likedBy } : m))
       );
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUser?.id]);
+  }, [currentUser?.id, roomId]);
 
   useEffect(() => {
-    if (!currentUser) return;
-    return subscribe("/user/queue/forum-updates", (payload) => {
+    if (!currentUser || !roomId) return;
+    return subscribe(`/topic/forum-rooms/${roomId}/updates`, (payload) => {
       if (payload.hidden) {
         setMessages((prev) => prev.filter((m) => m.id !== payload.messageId));
         return;
@@ -63,24 +66,24 @@ export function ForumProvider({ children }) {
       );
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUser?.id]);
+  }, [currentUser?.id, roomId]);
 
   useEffect(() => {
-    if (!currentUser) return;
-    return subscribe("/user/queue/forum-cleared", () => {
+    if (!currentUser || !roomId) return;
+    return subscribe(`/topic/forum-rooms/${roomId}/cleared`, () => {
       setMessages([]);
       setPage(0);
       setHasMore(false);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUser?.id]);
+  }, [currentUser?.id, roomId]);
 
   const loadOlderMessages = async () => {
     if (!hasMore || loadingOlder) return;
     setLoadingOlder(true);
     try {
       const nextPage = page + 1;
-      const res = await forumApi.listMessages(nextPage, 30);
+      const res = await forumApi.listMessages(roomId, nextPage, 30);
       const older = res.content.map(forumApi.toFrontendMessage).reverse();
       setMessages((prev) => [...older, ...prev]);
       setPage(nextPage);
@@ -94,14 +97,14 @@ export function ForumProvider({ children }) {
 
   const searchMessages = async (query) => {
     if (!query.trim()) return [];
-    const page = await forumApi.searchMessages(query.trim());
+    const page = await forumApi.searchMessages(roomId, query.trim());
     return page.content.map(forumApi.toFrontendMessage);
   };
 
   const jumpToMessage = async (messageId) => {
-    const { page: targetPage } = await forumApi.locateMessagePage(messageId, 30);
+    const { page: targetPage } = await forumApi.locateMessagePage(roomId, messageId, 30);
     const size = (targetPage + 1) * 30;
-    const res = await forumApi.listMessages(0, size);
+    const res = await forumApi.listMessages(roomId, 0, size);
     const mapped = res.content.map(forumApi.toFrontendMessage).reverse();
     setMessages(mapped);
     setPage(targetPage);
@@ -124,9 +127,16 @@ export function ForumProvider({ children }) {
     };
     setMessages((prev) => [...prev, optimisticMessage]);
     try {
-      const saved = await forumApi.sendMessage(trimmed, image, file);
+      const saved = await forumApi.sendMessage(roomId, trimmed, image, file);
       const mapped = forumApi.toFrontendMessage(saved);
-      setMessages((prev) => prev.map((m) => (m.id === tempId ? mapped : m)));
+      setMessages((prev) => {
+        // The room topic broadcast includes the sender, so the WebSocket handler may have
+        // already appended this message by the time this REST response resolves — dedupe
+        // instead of blindly swapping, or the message ends up rendered twice.
+        const withoutOptimistic = prev.filter((m) => m.id !== tempId);
+        if (withoutOptimistic.some((m) => m.id === mapped.id)) return withoutOptimistic;
+        return [...withoutOptimistic, mapped];
+      });
     } catch (err) {
       console.error("Không thể gửi tin nhắn:", err);
       setMessages((prev) => prev.filter((m) => m.id !== tempId));
@@ -188,6 +198,7 @@ export function ForumProvider({ children }) {
   return (
     <ForumContext.Provider
       value={{
+        room,
         messages,
         loading,
         hasMore,

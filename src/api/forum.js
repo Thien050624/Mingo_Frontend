@@ -2,17 +2,24 @@ import { request, ACCESS_TOKEN_KEY } from "./client";
 
 const token = () => localStorage.getItem(ACCESS_TOKEN_KEY);
 
-export const listMessages = (page = 0, size = 30) =>
-  request(`/forum/messages?page=${page}&size=${size}`, { token: token() });
+export const listRooms = () => request("/forum/rooms", { token: token() });
 
-export const searchMessages = (query, page = 0, size = 20) =>
-  request(`/forum/messages/search?q=${encodeURIComponent(query)}&page=${page}&size=${size}`, { token: token() });
+export const createRoom = (name, description) =>
+  request("/forum/rooms", { method: "POST", body: { name, description }, token: token() });
 
-export const locateMessagePage = (messageId, size = 30) =>
-  request(`/forum/messages/${messageId}/locate?size=${size}`, { token: token() });
+export const listMessages = (roomId, page = 0, size = 30) =>
+  request(`/forum/rooms/${roomId}/messages?page=${page}&size=${size}`, { token: token() });
 
-export const sendMessage = (text, imageUrl, file) =>
-  request("/forum/messages", {
+export const searchMessages = (roomId, query, page = 0, size = 20) =>
+  request(`/forum/rooms/${roomId}/messages/search?q=${encodeURIComponent(query)}&page=${page}&size=${size}`, {
+    token: token(),
+  });
+
+export const locateMessagePage = (roomId, messageId, size = 30) =>
+  request(`/forum/rooms/${roomId}/messages/${messageId}/locate?size=${size}`, { token: token() });
+
+export const sendMessage = (roomId, text, imageUrl, file) =>
+  request(`/forum/rooms/${roomId}/messages`, {
     method: "POST",
     body: {
       text,
@@ -36,6 +43,16 @@ export const toggleLikeMessage = (messageId) =>
 
 export const recallMessage = (messageId) =>
   request(`/forum/messages/${messageId}`, { method: "DELETE", token: token() });
+
+export function toFrontendRoom(r) {
+  return {
+    id: r.id,
+    name: r.name,
+    description: r.description || "",
+    createdBy: { id: r.createdBy.id, name: r.createdBy.name, avatar: r.createdBy.avatar },
+    createdAt: r.createdAt,
+  };
+}
 
 export function toFrontendMessage(m) {
   return {

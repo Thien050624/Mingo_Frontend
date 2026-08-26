@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import {
+  FaArrowLeft,
   FaComments,
   FaPaperPlane,
   FaFlag,
@@ -13,7 +14,7 @@ import {
   FaUndoAlt,
   FaSearch,
 } from "react-icons/fa";
-import { useForum } from "../context/ForumContext";
+import { ForumProvider, useForum } from "../context/ForumContext";
 import { useCurrentUser } from "../context/UserContext";
 import { uploadImage, uploadFile } from "../api/uploads";
 import { formatFileSize } from "../utils/file";
@@ -26,8 +27,18 @@ import ForumRoomSkeleton from "../components/forum/ForumRoomSkeleton";
 const reportReasons = ["Spam", "Nội dung không phù hợp", "Quấy rối / thù ghét", "Khác"];
 
 export default function Forum() {
+  const { roomId } = useParams();
+  return (
+    <ForumProvider roomId={roomId}>
+      <ForumRoomView />
+    </ForumProvider>
+  );
+}
+
+function ForumRoomView() {
   const { currentUser } = useCurrentUser();
   const {
+    room,
     messages,
     loading,
     hasMore,
@@ -189,11 +200,18 @@ export default function Forum() {
         <div className="bg-zm-card rounded-2xl border border-zm-border overflow-hidden flex flex-col h-[calc(100vh-17rem)] lg:h-[calc(100vh-13rem)]">
           <div className="relative shrink-0" ref={msgSearchRef}>
           <div className="flex items-center gap-3 px-4 h-16 border-b border-zm-border">
+            <Link
+              to="/forum"
+              aria-label="Về danh sách phòng"
+              className="w-11 h-11 -ml-2 flex items-center justify-center shrink-0 text-zm-muted hover:text-zm-blue-light hover:bg-zm-hover rounded-full transition-colors"
+            >
+              <FaArrowLeft size={14} aria-hidden="true" />
+            </Link>
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-zm-blue to-zm-blue-light flex items-center justify-center text-white glow-violet shrink-0">
               <FaComments size={16} aria-hidden="true" />
             </div>
             <div className="min-w-0">
-              <p className="font-semibold text-sm">Phòng chat chung Mingo</p>
+              <p className="font-semibold text-sm truncate">{room?.name || "Diễn đàn"}</p>
               <p className="text-xs text-zm-muted">
                 <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1" aria-hidden="true" />
                 Đang hoạt động
@@ -495,7 +513,7 @@ export default function Forum() {
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && send()}
-                aria-label="Nhập tin nhắn vào phòng chat chung"
+                aria-label={`Nhập tin nhắn vào phòng ${room?.name || ""}`}
                 placeholder="Nhắn gì đó với mọi người..."
                 className="flex-1 min-w-0 bg-transparent outline-none text-sm py-2.5 placeholder-zm-muted"
               />

@@ -6,6 +6,7 @@ import Chat from "./pages/Chat";
 import Notifications from "./pages/Notifications";
 import Friends from "./pages/Friends";
 import Forum from "./pages/Forum";
+import ForumRooms from "./pages/ForumRooms";
 import Saved from "./pages/Saved";
 import Settings from "./pages/Settings";
 import SettingsAccount from "./pages/SettingsAccount";
@@ -15,7 +16,6 @@ import Onboarding from "./pages/Onboarding";
 import NotFound from "./pages/NotFound";
 import { UserProvider } from "./context/UserContext";
 import { RequireAuth, RedirectIfAuthed } from "./components/auth/RouteGuards";
-import { ForumProvider } from "./context/ForumContext";
 import { ChatProvider } from "./context/ChatContext";
 import { NotificationProvider } from "./context/NotificationContext";
 import { SavedProvider } from "./context/SavedContext";
@@ -29,7 +29,6 @@ export default function App() {
     <UserProvider>
       <WebSocketProvider>
       <PresenceProvider>
-      <ForumProvider>
         <ChatProvider>
           <NotificationProvider>
             <SavedProvider>
@@ -63,7 +62,8 @@ export default function App() {
                   <Route path="/chat" element={<Chat />} />
                   <Route path="/notifications" element={<Notifications />} />
                   <Route path="/friends" element={<Friends />} />
-                  <Route path="/forum" element={<Forum />} />
+                  <Route path="/forum" element={<ForumRooms />} />
+                  <Route path="/forum/:roomId" element={<Forum />} />
                   <Route path="/saved" element={<Saved />} />
                   <Route path="/settings" element={<Settings />} />
                   <Route path="/settings/account" element={<SettingsAccount />} />
@@ -74,7 +74,6 @@ export default function App() {
             </SavedProvider>
           </NotificationProvider>
         </ChatProvider>
-      </ForumProvider>
       </PresenceProvider>
       </WebSocketProvider>
     </UserProvider>
