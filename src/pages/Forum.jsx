@@ -222,7 +222,7 @@ function ForumRoomView() {
               onClick={() => setMsgSearchOpen((v) => !v)}
               aria-label="Tìm kiếm tin nhắn"
               aria-expanded={msgSearchOpen}
-              className={`ml-auto p-2.5 rounded-full hover:bg-zm-hover text-zm-blue-light ${msgSearchOpen ? "bg-zm-hover" : ""}`}
+              className={`ml-auto w-11 h-11 flex items-center justify-center rounded-full hover:bg-zm-hover text-zm-blue-light ${msgSearchOpen ? "bg-zm-hover" : ""}`}
             >
               <FaSearch size={15} aria-hidden="true" />
             </button>
