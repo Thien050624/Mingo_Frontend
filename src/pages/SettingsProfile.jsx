@@ -63,16 +63,6 @@ export default function SettingsProfile() {
         <FaArrowLeft size={12} aria-hidden="true" /> Về Cài đặt
       </Link>
 
-      <div className="relative overflow-hidden rounded-2xl border border-zm-border bg-gradient-to-br from-zm-blue/25 via-zm-card to-zm-card p-5 mb-5">
-        <div className="absolute -top-16 -right-10 w-52 h-52 rounded-full bg-zm-blue-light/20 blur-3xl pointer-events-none" />
-        <h1 className="relative text-2xl font-extrabold">
-          Chỉnh sửa <span className="glow-text">hồ sơ cá nhân</span>
-        </h1>
-        <p className="relative text-sm text-zm-muted mt-1">
-          Thay đổi ở đây sẽ cập nhật khắp Mingo — bài viết, bình luận, trang cá nhân...
-        </p>
-      </div>
-
       <form onSubmit={submit} className="bg-zm-card rounded-2xl border border-zm-border overflow-hidden">
         <div className="flex items-center gap-4 p-6 pb-0">
           <div className="relative shrink-0">

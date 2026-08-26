@@ -5,7 +5,7 @@ import RightPanel from "./RightPanel";
 import MobileBottomNav from "./MobileBottomNav";
 import ChatBubble from "../chat/ChatBubble";
 
-const NO_RIGHT_PANEL_PREFIXES = ["/chat", "/forum", "/profile", "/friends", "/notifications", "/saved"];
+const NO_RIGHT_PANEL_PREFIXES = ["/chat", "/forum", "/profile", "/friends", "/notifications", "/saved", "/settings"];
 
 export default function MainLayout() {
   const location = useLocation();

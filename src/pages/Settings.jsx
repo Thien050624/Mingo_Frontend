@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { FaCog, FaUserShield, FaUserEdit, FaChevronRight } from "react-icons/fa";
+import { FaUserShield, FaUserEdit, FaChevronRight } from "react-icons/fa";
 
 const cards = [
   {
@@ -19,19 +19,6 @@ const cards = [
 export default function Settings() {
   return (
     <div className="max-w-2xl mx-auto">
-      <div className="relative overflow-hidden rounded-2xl border border-zm-border bg-gradient-to-br from-zm-blue/25 via-zm-card to-zm-card p-5 mb-5">
-        <div className="absolute -top-16 -right-10 w-52 h-52 rounded-full bg-zm-blue-light/20 blur-3xl pointer-events-none" />
-        <div className="relative flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-zm-blue-light">
-          <FaCog aria-hidden="true" /> Cài đặt
-        </div>
-        <h1 className="relative text-2xl font-extrabold mt-1">
-          Bạn muốn chỉnh <span className="glow-text">phần nào?</span>
-        </h1>
-        <p className="relative text-sm text-zm-muted mt-1">
-          Chọn 1 trong 2 mục bên dưới để bắt đầu
-        </p>
-      </div>
-
       <div className="grid sm:grid-cols-2 gap-4">
         {cards.map(({ to, icon: Icon, title, description }) => (
           <Link

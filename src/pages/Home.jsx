@@ -3,7 +3,6 @@ import { useLocation } from "react-router-dom";
 import PostComposer from "../components/feed/PostComposer";
 import PostCard from "../components/feed/PostCard";
 import PostCardSkeleton from "../components/feed/PostCardSkeleton";
-import WelcomeBanner from "../components/feed/WelcomeBanner";
 import ForumHighlights from "../components/forum/ForumHighlights";
 import * as postsApi from "../api/posts";
 
@@ -57,8 +56,6 @@ export default function Home() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <WelcomeBanner postCount={posts.length} />
-
       <ForumHighlights />
       <PostComposer onPost={addPost} />
 

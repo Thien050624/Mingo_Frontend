@@ -59,8 +59,6 @@ export default function Forum() {
   const fileInputRef = useRef(null);
   const attachmentInputRef = useRef(null);
 
-  const participantCount = new Set(messages.map((m) => m.author.id)).size;
-
   const getReportButtonRef = (id) => {
     if (!reportButtonRefs.current[id]) reportButtonRefs.current[id] = { current: null };
     return reportButtonRefs.current[id];
@@ -185,19 +183,6 @@ export default function Forum() {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="relative overflow-hidden rounded-xl border border-zm-border bg-gradient-to-br from-zm-blue/25 via-zm-card to-zm-card px-4 py-3 mb-4">
-        <div className="absolute -top-10 -right-6 w-28 h-28 rounded-full bg-zm-blue-light/20 blur-3xl pointer-events-none" />
-        <div className="relative flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-widest text-zm-blue-light">
-          <FaComments size={11} aria-hidden="true" /> Diễn đàn chung
-        </div>
-        <h1 className="relative text-lg font-extrabold mt-0.5">
-          Phòng chat để mọi người <span className="glow-text">cùng trò chuyện</span>
-        </h1>
-        <p className="relative text-xs text-zm-muted mt-0.5">
-          {messages.length} tin nhắn · {participantCount} người đã tham gia trò chuyện
-        </p>
-      </div>
-
       {loading ? (
         <ForumRoomSkeleton />
       ) : (

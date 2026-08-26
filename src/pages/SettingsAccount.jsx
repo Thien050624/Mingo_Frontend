@@ -131,16 +131,6 @@ export default function SettingsAccount() {
         <FaArrowLeft size={12} aria-hidden="true" /> Về Cài đặt
       </Link>
 
-      <div className="relative overflow-hidden rounded-2xl border border-zm-border bg-gradient-to-br from-zm-blue/25 via-zm-card to-zm-card p-5 mb-5">
-        <div className="absolute -top-16 -right-10 w-52 h-52 rounded-full bg-zm-blue-light/20 blur-3xl pointer-events-none" />
-        <h1 className="relative text-2xl font-extrabold">
-          Cài đặt <span className="glow-text">tài khoản</span>
-        </h1>
-        <p className="relative text-sm text-zm-muted mt-1">
-          Email, mật khẩu, ngôn ngữ và thông báo
-        </p>
-      </div>
-
       <div className="flex flex-col gap-4">
         <form onSubmit={submitEmail} className="bg-zm-card rounded-2xl border border-zm-border p-5">
           <h2 className="font-bold text-base mb-3">Email</h2>

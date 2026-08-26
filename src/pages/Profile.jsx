@@ -214,6 +214,18 @@ export default function Profile() {
         <div className="absolute -top-16 -right-10 w-64 h-64 rounded-full bg-zm-blue-light/15 blur-3xl pointer-events-none animate-aurora-a" />
         <div className="absolute -bottom-20 -left-16 w-72 h-72 rounded-full bg-zm-blue/15 blur-3xl pointer-events-none animate-aurora-b" />
 
+        {isOwn && (
+          <button
+            type="button"
+            onClick={() => navigate("/settings/profile")}
+            aria-label="Chỉnh sửa trang cá nhân"
+            title="Chỉnh sửa trang cá nhân"
+            className="absolute top-3 right-3 z-10 w-11 h-11 flex items-center justify-center bg-zm-bg hover:bg-zm-hover border border-zm-border rounded-full transition-colors"
+          >
+            <FaUserEdit size={14} aria-hidden="true" />
+          </button>
+        )}
+
         <div className="relative px-4 sm:px-8 pt-8 pb-5">
           <div className="flex flex-col sm:flex-row sm:items-center gap-5">
             <div className="relative shrink-0 mx-auto sm:mx-0">
@@ -273,15 +285,7 @@ export default function Profile() {
             </div>
 
             <div className="flex items-center justify-center gap-2 shrink-0">
-              {isOwn ? (
-                <button
-                  type="button"
-                  onClick={() => navigate("/settings/profile")}
-                  className="flex items-center gap-2 bg-zm-bg text-zm-text hover:bg-zm-hover border border-zm-border font-semibold text-sm px-4 py-2 rounded-lg transition-colors"
-                >
-                  <FaUserEdit size={13} aria-hidden="true" /> Chỉnh sửa trang cá nhân
-                </button>
-              ) : (
+              {!isOwn && (
                 <>
                   {friendshipStatus === "FRIENDS" && (
                     <button
