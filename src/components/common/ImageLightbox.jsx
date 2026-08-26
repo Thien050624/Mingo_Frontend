@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { FaTimes, FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { isVideoUrl } from "../../utils/media";
 
 export default function ImageLightbox({ images, index, onClose, onNavigate }) {
   const hasMultiple = images.length > 1;
@@ -42,12 +43,23 @@ export default function ImageLightbox({ images, index, onClose, onNavigate }) {
         </button>
       )}
 
-      <img
-        src={images[index]}
-        alt="Xem ảnh phóng to"
-        className="max-w-full max-h-full object-contain"
-        onClick={(e) => e.stopPropagation()}
-      />
+      {isVideoUrl(images[index]) ? (
+        <video
+          src={images[index]}
+          controls
+          autoPlay
+          playsInline
+          className="max-w-full max-h-full object-contain"
+          onClick={(e) => e.stopPropagation()}
+        />
+      ) : (
+        <img
+          src={images[index]}
+          alt="Xem ảnh phóng to"
+          className="max-w-full max-h-full object-contain"
+          onClick={(e) => e.stopPropagation()}
+        />
+      )}
 
       {hasMultiple && (
         <button

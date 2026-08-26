@@ -17,6 +17,9 @@ import {
   FaTimes,
   FaChevronDown,
   FaImage,
+  FaImages,
+  FaCamera,
+  FaVideo,
 } from "react-icons/fa";
 import { reactionIcons, reactionKeys } from "../../data/mockData";
 import { useCurrentUser } from "../../context/UserContext";
@@ -24,9 +27,11 @@ import { useToast } from "../../context/ToastContext";
 import { useSaved } from "../../context/SavedContext";
 import * as postsApi from "../../api/posts";
 import * as uploadsApi from "../../api/uploads";
+import { isVideoFile, isVideoUrl } from "../../utils/media";
 import PostImageGrid from "./PostImageGrid";
 import Avatar from "../common/Avatar";
 import AnchoredMenu from "../common/AnchoredMenu";
+import BottomSheet from "../common/BottomSheet";
 
 const visibilityMeta = {
   PUBLIC: { icon: FaGlobeAsia, label: "Công khai" },
@@ -72,9 +77,12 @@ export default function PostCard({ post, onUpdated, onDeleted }) {
   const [editError, setEditError] = useState("");
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [showEditAttachSheet, setShowEditAttachSheet] = useState(false);
   const menuButtonRef = useRef(null);
   const visibilityButtonRef = useRef(null);
-  const editFileRef = useRef(null);
+  const editLibraryRef = useRef(null);
+  const editPhotoCaptureRef = useRef(null);
+  const editVideoCaptureRef = useRef(null);
   const { currentUser } = useCurrentUser();
   const { showToast } = useToast();
   const { addSavedPost, removeSavedPost } = useSaved();
@@ -109,7 +117,7 @@ export default function PostCard({ post, onUpdated, onDeleted }) {
   const startEdit = () => {
     setEditText(post.content);
     setEditVisibility(post.visibility);
-    setEditImages(post.images.map((url) => ({ type: "existing", url })));
+    setEditImages(post.images.map((url) => ({ type: "existing", url, media: isVideoUrl(url) ? "video" : "image" })));
     setEditError("");
     setEditing(true);
     closeMenu();
@@ -124,8 +132,14 @@ export default function PostCard({ post, onUpdated, onDeleted }) {
 
   const handleEditFiles = (e) => {
     const files = Array.from(e.target.files || []);
-    const items = files.map((f) => ({ type: "new", file: f, preview: URL.createObjectURL(f) }));
+    const items = files.map((f) => ({
+      type: "new",
+      file: f,
+      preview: URL.createObjectURL(f),
+      media: isVideoFile(f) ? "video" : "image",
+    }));
     setEditImages((prev) => [...prev, ...items]);
+    e.target.value = "";
   };
 
   const removeEditImage = (idx) => {
@@ -500,16 +514,25 @@ export default function PostCard({ post, onUpdated, onDeleted }) {
             <div className="grid grid-cols-3 gap-1.5 mt-2">
               {editImages.map((img, idx) => (
                 <div key={idx} className="relative rounded-xl overflow-hidden aspect-square border border-zm-border">
-                  <img
-                    src={img.type === "existing" ? img.url : img.preview}
-                    alt={`Ảnh ${idx + 1}`}
-                    className="w-full h-full object-cover"
-                  />
+                  {img.media === "video" ? (
+                    <video
+                      src={img.type === "existing" ? img.url : img.preview}
+                      className="w-full h-full object-cover"
+                      muted
+                      playsInline
+                    />
+                  ) : (
+                    <img
+                      src={img.type === "existing" ? img.url : img.preview}
+                      alt={`Ảnh ${idx + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                  )}
                   <button
                     type="button"
                     onClick={() => removeEditImage(idx)}
                     aria-label={`Xoá ảnh ${idx + 1}`}
-                    className="absolute top-1 right-1 bg-black/60 hover:bg-black/80 text-white rounded-full p-1"
+                    className="absolute top-1 right-1 w-11 h-11 flex items-center justify-center bg-black/60 hover:bg-black/80 text-white rounded-full"
                   >
                     <FaTimes size={10} aria-hidden="true" />
                   </button>
@@ -519,21 +542,75 @@ export default function PostCard({ post, onUpdated, onDeleted }) {
           )}
 
           <input
-            ref={editFileRef}
+            ref={editLibraryRef}
             type="file"
-            accept="image/*"
+            accept="image/*,video/*"
             multiple
             hidden
-            aria-label="Thêm ảnh vào bài viết"
+            aria-label="Chọn ảnh hoặc video từ thư viện"
+            onChange={handleEditFiles}
+          />
+          <input
+            ref={editPhotoCaptureRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            hidden
+            aria-label="Chụp ảnh"
+            onChange={handleEditFiles}
+          />
+          <input
+            ref={editVideoCaptureRef}
+            type="file"
+            accept="video/*"
+            capture="environment"
+            hidden
+            aria-label="Quay video"
             onChange={handleEditFiles}
           />
           <button
             type="button"
-            onClick={() => editFileRef.current?.click()}
+            onClick={() => setShowEditAttachSheet(true)}
             className="flex items-center gap-2 text-sm font-medium text-zm-muted hover:text-emerald-400 hover:bg-zm-hover rounded-lg px-3 py-1.5 mt-2 transition-colors"
           >
-            <FaImage className="text-emerald-400" aria-hidden="true" /> Thêm ảnh
+            <FaImage className="text-emerald-400" aria-hidden="true" /> Thêm ảnh/video
           </button>
+          <BottomSheet
+            open={showEditAttachSheet}
+            onClose={() => setShowEditAttachSheet(false)}
+            title="Thêm vào bài viết"
+          >
+            <button
+              type="button"
+              onClick={() => {
+                setShowEditAttachSheet(false);
+                editLibraryRef.current?.click();
+              }}
+              className="w-full flex items-center gap-3 px-3 min-h-[52px] text-sm font-medium rounded-xl hover:bg-zm-hover transition-colors"
+            >
+              <FaImages className="text-emerald-400 shrink-0" size={16} aria-hidden="true" /> Chọn từ thư viện
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setShowEditAttachSheet(false);
+                editPhotoCaptureRef.current?.click();
+              }}
+              className="w-full flex items-center gap-3 px-3 min-h-[52px] text-sm font-medium rounded-xl hover:bg-zm-hover transition-colors"
+            >
+              <FaCamera className="text-zm-blue-light shrink-0" size={16} aria-hidden="true" /> Chụp ảnh
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setShowEditAttachSheet(false);
+                editVideoCaptureRef.current?.click();
+              }}
+              className="w-full flex items-center gap-3 px-3 min-h-[52px] text-sm font-medium rounded-xl hover:bg-zm-hover transition-colors"
+            >
+              <FaVideo className="text-zm-orange shrink-0" size={16} aria-hidden="true" /> Quay video
+            </button>
+          </BottomSheet>
 
           <div className="flex items-center justify-between mt-2">
             <div className="relative">

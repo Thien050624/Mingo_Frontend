@@ -1,5 +1,23 @@
 import { useState } from "react";
 import ImageLightbox from "../common/ImageLightbox";
+import { isVideoUrl } from "../../utils/media";
+
+function Media({ src, alt, className, onClick }) {
+  if (isVideoUrl(src)) {
+    return (
+      <video
+        src={src}
+        onClick={onClick}
+        className={className}
+        muted
+        loop
+        playsInline
+        aria-label={alt}
+      />
+    );
+  }
+  return <img src={src} alt={alt} onClick={onClick} className={className} />;
+}
 
 export default function PostImageGrid({ images, authorName }) {
   const [lightboxIndex, setLightboxIndex] = useState(null);
@@ -16,7 +34,7 @@ export default function PostImageGrid({ images, authorName }) {
   if (images.length === 1) {
     return (
       <>
-        <img
+        <Media
           src={images[0]}
           alt={altFor(0, 1)}
           onClick={() => openLightbox(0)}
@@ -39,7 +57,7 @@ export default function PostImageGrid({ images, authorName }) {
       <>
         <div className="grid grid-cols-2 gap-0.5">
           {images.map((src, i) => (
-            <img
+            <Media
               key={i}
               src={src}
               alt={altFor(i, images.length)}
@@ -64,19 +82,19 @@ export default function PostImageGrid({ images, authorName }) {
     return (
       <>
         <div className="grid grid-cols-2 grid-rows-2 gap-0.5 h-96">
-          <img
+          <Media
             src={images[0]}
             alt={altFor(0, 3)}
             onClick={() => openLightbox(0)}
             className="row-span-2 w-full h-full object-cover bg-zm-bg cursor-pointer"
           />
-          <img
+          <Media
             src={images[1]}
             alt={altFor(1, 3)}
             onClick={() => openLightbox(1)}
             className="w-full h-full object-cover bg-zm-bg cursor-pointer"
           />
-          <img
+          <Media
             src={images[2]}
             alt={altFor(2, 3)}
             onClick={() => openLightbox(2)}
@@ -104,7 +122,7 @@ export default function PostImageGrid({ images, authorName }) {
           const isLast = i === 3 && extra > 0;
           return (
             <div key={i} className="relative w-full h-full">
-              <img
+              <Media
                 src={src}
                 alt={altFor(i, images.length)}
                 onClick={() => openLightbox(i)}

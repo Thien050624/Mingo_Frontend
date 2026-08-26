@@ -1,10 +1,23 @@
 import { useEffect, useRef, useState } from "react";
-import { FaImage, FaSmile, FaTimes, FaGlobeAsia, FaUserFriends, FaLock, FaChevronDown } from "react-icons/fa";
+import {
+  FaImage,
+  FaSmile,
+  FaTimes,
+  FaGlobeAsia,
+  FaUserFriends,
+  FaLock,
+  FaChevronDown,
+  FaImages,
+  FaCamera,
+  FaVideo,
+} from "react-icons/fa";
 import { useCurrentUser } from "../../context/UserContext";
 import { useToast } from "../../context/ToastContext";
 import * as uploadsApi from "../../api/uploads";
+import { isVideoFile } from "../../utils/media";
 import Avatar from "../common/Avatar";
 import AnchoredMenu from "../common/AnchoredMenu";
+import BottomSheet from "../common/BottomSheet";
 
 const feelings = [
   { emoji: "😊", label: "hạnh phúc" },
@@ -32,7 +45,10 @@ export default function PostComposer({ onPost }) {
   const [showVisibility, setShowVisibility] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const fileRef = useRef(null);
+  const [showAttachSheet, setShowAttachSheet] = useState(false);
+  const libraryRef = useRef(null);
+  const photoCaptureRef = useRef(null);
+  const videoCaptureRef = useRef(null);
   const feelingRef = useRef(null);
   const visibilityButtonRef = useRef(null);
 
@@ -56,8 +72,13 @@ export default function PostComposer({ onPost }) {
 
   const handleFiles = (e) => {
     const files = Array.from(e.target.files || []);
-    const items = files.map((f) => ({ file: f, preview: URL.createObjectURL(f) }));
+    const items = files.map((f) => ({
+      file: f,
+      preview: URL.createObjectURL(f),
+      type: isVideoFile(f) ? "video" : "image",
+    }));
     setImages((prev) => [...prev, ...items]);
+    e.target.value = "";
   };
 
   const removeImage = (idx) => {
@@ -183,12 +204,16 @@ export default function PostComposer({ onPost }) {
             <div className="grid grid-cols-3 gap-1.5 mb-3">
               {images.map((img, idx) => (
                 <div key={idx} className="relative rounded-xl overflow-hidden aspect-square border border-zm-border">
-                  <img src={img.preview} alt={`Ảnh đính kèm ${idx + 1}`} className="w-full h-full object-cover" />
+                  {img.type === "video" ? (
+                    <video src={img.preview} className="w-full h-full object-cover" muted playsInline />
+                  ) : (
+                    <img src={img.preview} alt={`Ảnh đính kèm ${idx + 1}`} className="w-full h-full object-cover" />
+                  )}
                   <button
                     type="button"
                     onClick={() => removeImage(idx)}
                     aria-label={`Xóa ảnh đính kèm ${idx + 1}`}
-                    className="absolute top-1 right-1 bg-black/60 hover:bg-black/80 text-white rounded-full p-1"
+                    className="absolute top-1 right-1 w-11 h-11 flex items-center justify-center bg-black/60 hover:bg-black/80 text-white rounded-full"
                   >
                     <FaTimes size={10} aria-hidden="true" />
                   </button>
@@ -202,20 +227,71 @@ export default function PostComposer({ onPost }) {
       <div className="relative flex items-center gap-1 mt-3 pt-2 border-t border-zm-border">
         <button
           type="button"
-          onClick={() => fileRef.current?.click()}
+          onClick={() => setShowAttachSheet(true)}
           className="flex items-center gap-2 text-sm font-medium text-zm-muted hover:text-emerald-400 hover:bg-zm-hover rounded-lg px-3 py-2 flex-1 justify-center transition-colors"
         >
           <FaImage className="text-emerald-400" aria-hidden="true" /> Ảnh/Video
         </button>
         <input
-          ref={fileRef}
+          ref={libraryRef}
           type="file"
-          accept="image/*"
+          accept="image/*,video/*"
           multiple
           hidden
-          aria-label="Chọn ảnh để đăng"
+          aria-label="Chọn ảnh hoặc video từ thư viện"
           onChange={handleFiles}
         />
+        <input
+          ref={photoCaptureRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          hidden
+          aria-label="Chụp ảnh"
+          onChange={handleFiles}
+        />
+        <input
+          ref={videoCaptureRef}
+          type="file"
+          accept="video/*"
+          capture="environment"
+          hidden
+          aria-label="Quay video"
+          onChange={handleFiles}
+        />
+
+        <BottomSheet open={showAttachSheet} onClose={() => setShowAttachSheet(false)} title="Thêm vào bài viết">
+          <button
+            type="button"
+            onClick={() => {
+              setShowAttachSheet(false);
+              libraryRef.current?.click();
+            }}
+            className="w-full flex items-center gap-3 px-3 min-h-[52px] text-sm font-medium rounded-xl hover:bg-zm-hover transition-colors"
+          >
+            <FaImages className="text-emerald-400 shrink-0" size={16} aria-hidden="true" /> Chọn từ thư viện
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setShowAttachSheet(false);
+              photoCaptureRef.current?.click();
+            }}
+            className="w-full flex items-center gap-3 px-3 min-h-[52px] text-sm font-medium rounded-xl hover:bg-zm-hover transition-colors"
+          >
+            <FaCamera className="text-zm-blue-light shrink-0" size={16} aria-hidden="true" /> Chụp ảnh
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setShowAttachSheet(false);
+              videoCaptureRef.current?.click();
+            }}
+            className="w-full flex items-center gap-3 px-3 min-h-[52px] text-sm font-medium rounded-xl hover:bg-zm-hover transition-colors"
+          >
+            <FaVideo className="text-zm-orange shrink-0" size={16} aria-hidden="true" /> Quay video
+          </button>
+        </BottomSheet>
 
         <div ref={feelingRef} className="relative flex-1">
           {showFeelings && (
