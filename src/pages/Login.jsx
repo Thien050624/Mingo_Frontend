@@ -4,9 +4,7 @@ import { FaEnvelope, FaLock } from "react-icons/fa";
 import TextField from "../components/common/TextField";
 import { useCurrentUser } from "../context/UserContext";
 import { useToast } from "../context/ToastContext";
-import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY } from "../api/client";
 
-const ADMIN_URL = (import.meta.env.VITE_ADMIN_URL || "http://localhost:5174").replace(/\/$/, "");
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
 export default function Login() {
@@ -27,12 +25,6 @@ export default function Login() {
   };
 
   const afterAuthenticated = (user, successMessage) => {
-    if (user.role === "ADMIN") {
-      const at = localStorage.getItem(ACCESS_TOKEN_KEY);
-      const rt = localStorage.getItem(REFRESH_TOKEN_KEY);
-      window.location.href = `${ADMIN_URL}/handoff?at=${encodeURIComponent(at)}&rt=${encodeURIComponent(rt)}`;
-      return;
-    }
     showToast(successMessage);
     navigate(user.onboarded ? "/" : "/onboarding");
   };
