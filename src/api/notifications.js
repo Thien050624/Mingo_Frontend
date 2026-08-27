@@ -26,6 +26,16 @@ const TYPE_META = {
   COMMENT_REPLY: { type: "comment", content: "đã phản hồi bình luận của bạn" },
   POST_REACTION: { type: "like", content: "đã bày tỏ cảm xúc về bài viết của bạn" },
   COMMENT_LIKE: { type: "like", content: "đã thích bình luận của bạn" },
+  POST_HIDDEN_BY_ADMIN: {
+    type: "moderation",
+    content: "Bài viết của bạn đã bị ẩn do vi phạm",
+    raw: true,
+  },
+  POST_DELETED_BY_ADMIN: {
+    type: "moderation",
+    content: "Bài viết của bạn đã bị xóa do vi phạm",
+    raw: true,
+  },
 };
 
 export function toFrontendNotification(n) {
@@ -35,6 +45,7 @@ export function toFrontendNotification(n) {
     user: { id: n.actor.id, name: n.actor.name, avatar: n.actor.avatar },
     type: meta.type,
     content: meta.content,
+    raw: !!meta.raw,
     time: formatRelativeTime(n.createdAt),
     unread: !n.read,
     postId: n.postId,

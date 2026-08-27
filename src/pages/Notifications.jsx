@@ -1,6 +1,15 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { FaThumbsUp, FaComment, FaUserPlus, FaUserFriends, FaCheckDouble, FaTimes, FaTrash } from "react-icons/fa";
+import {
+  FaThumbsUp,
+  FaComment,
+  FaUserPlus,
+  FaUserFriends,
+  FaCheckDouble,
+  FaTimes,
+  FaTrash,
+  FaExclamationTriangle,
+} from "react-icons/fa";
 import { useNotifications } from "../context/NotificationContext";
 import Avatar from "../components/common/Avatar";
 import NotificationsSkeleton from "../components/layout/NotificationsSkeleton";
@@ -13,6 +22,8 @@ const iconFor = (type) => {
       return <FaComment className="text-white" size={13} aria-hidden="true" />;
     case "follow":
       return <FaUserPlus className="text-white" size={13} aria-hidden="true" />;
+    case "moderation":
+      return <FaExclamationTriangle className="text-white" size={13} aria-hidden="true" />;
     default:
       return <FaUserFriends className="text-white" size={13} aria-hidden="true" />;
   }
@@ -26,6 +37,8 @@ const bgFor = (type) => {
       return "bg-emerald-500";
     case "follow":
       return "bg-zm-orange";
+    case "moderation":
+      return "bg-zm-heart";
     default:
       return "bg-zm-blue-light";
   }
@@ -45,7 +58,7 @@ export default function Notifications() {
     markRead(n.id);
     if (n.postId) {
       navigate("/", { state: { scrollToPostId: n.postId } });
-    } else {
+    } else if (!n.raw) {
       navigate(`/profile/${n.user.id}`);
     }
   };
@@ -110,26 +123,39 @@ export default function Notifications() {
                 key={n.id}
                 className={`group relative flex gap-3 px-4 py-3 transition-colors ${n.unread ? "bg-zm-blue/10" : ""}`}
               >
-                <Link to={`/profile/${n.user.id}`} className="relative shrink-0">
-                  <Avatar src={n.user.avatar} alt={`Ảnh đại diện của ${n.user.name}`} className="w-12 h-12" />
+                {n.raw ? (
                   <div
                     aria-hidden="true"
-                    className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center ring-2 ring-zm-card ${bgFor(
-                      n.type
-                    )}`}
+                    className={`shrink-0 w-12 h-12 rounded-full flex items-center justify-center ${bgFor(n.type)}`}
                   >
                     {iconFor(n.type)}
                   </div>
-                </Link>
+                ) : (
+                  <Link to={`/profile/${n.user.id}`} className="relative shrink-0">
+                    <Avatar src={n.user.avatar} alt={`Ảnh đại diện của ${n.user.name}`} className="w-12 h-12" />
+                    <div
+                      aria-hidden="true"
+                      className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center ring-2 ring-zm-card ${bgFor(
+                        n.type
+                      )}`}
+                    >
+                      {iconFor(n.type)}
+                    </div>
+                  </Link>
+                )}
                 <button
                   type="button"
                   onClick={() => openNotification(n)}
-                  aria-label={`${n.user.name} ${n.content}, ${n.time}${n.unread ? ", chưa đọc" : ""}`}
+                  aria-label={`${n.raw ? n.content : `${n.user.name} ${n.content}`}, ${n.time}${n.unread ? ", chưa đọc" : ""}`}
                   className="flex-1 min-w-0 flex items-start gap-3 text-left hover:bg-zm-hover -mx-1 px-1 py-1 rounded-lg transition-colors"
                 >
                   <div className="flex-1 min-w-0">
                     <p className="text-sm leading-snug">
-                      <span className="font-semibold">{n.user.name}</span> {n.content}
+                      {n.raw ? n.content : (
+                        <>
+                          <span className="font-semibold">{n.user.name}</span> {n.content}
+                        </>
+                      )}
                     </p>
                     <span className="text-xs text-zm-blue-light font-medium">{n.time}</span>
                   </div>
