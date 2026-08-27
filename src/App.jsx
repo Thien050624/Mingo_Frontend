@@ -5,6 +5,7 @@ import Profile from "./pages/Profile";
 import Chat from "./pages/Chat";
 import Notifications from "./pages/Notifications";
 import Friends from "./pages/Friends";
+import SearchResults from "./pages/SearchResults";
 import Forum from "./pages/Forum";
 import ForumRooms from "./pages/ForumRooms";
 import Saved from "./pages/Saved";
@@ -62,6 +63,7 @@ export default function App() {
                   <Route path="/chat" element={<Chat />} />
                   <Route path="/notifications" element={<Notifications />} />
                   <Route path="/friends" element={<Friends />} />
+                  <Route path="/search" element={<SearchResults />} />
                   <Route path="/forum" element={<ForumRooms />} />
                   <Route path="/forum/:roomId" element={<Forum />} />
                   <Route path="/saved" element={<Saved />} />

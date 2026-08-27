@@ -90,7 +90,7 @@ export default function SearchBar() {
       </div>
 
       {open && q && (
-        <div className="absolute left-0 right-0 top-11 bg-zm-card border border-zm-border rounded-xl shadow-2xl overflow-hidden max-h-96 overflow-y-auto z-50 glow-violet">
+        <div className="absolute left-0 top-11 w-72 max-w-[calc(100vw-1.5rem)] bg-zm-card border border-zm-border rounded-xl shadow-2xl overflow-hidden max-h-96 overflow-y-auto z-50 glow-violet">
           {searching && (
             <p className="px-4 py-6 text-sm text-zm-muted text-center">Đang tìm kiếm...</p>
           )}
@@ -106,20 +106,40 @@ export default function SearchBar() {
               <p className="px-4 pb-1 text-[11px] font-bold uppercase tracking-wide text-zm-muted">
                 Mọi người
               </p>
-              {matchedPeople.map((p) => (
-                <Link
-                  key={p.id}
-                  to={`/profile/${p.id}`}
-                  onClick={() => {
-                    setOpen(false);
-                    setQuery("");
-                  }}
-                  className="flex items-center gap-3 px-4 py-2 hover:bg-zm-hover transition-colors"
-                >
-                  <Avatar src={p.avatar} alt="" className="w-8 h-8" />
-                  <span className="text-sm font-medium">{p.name}</span>
-                </Link>
-              ))}
+              {matchedPeople.map((p) => {
+                const workLocation = [
+                  p.work ? `Làm việc tại ${p.work}` : null,
+                  p.location,
+                ]
+                  .filter(Boolean)
+                  .join(" · ");
+                const extra = [
+                  p.mutualFriendsCount > 0 ? `${p.mutualFriendsCount} bạn chung` : null,
+                  p.postCount > 0 ? `${p.postCount} bài viết` : null,
+                ]
+                  .filter(Boolean)
+                  .join(" · ");
+                return (
+                  <Link
+                    key={p.id}
+                    to={`/profile/${p.id}`}
+                    onClick={() => {
+                      setOpen(false);
+                      setQuery("");
+                    }}
+                    className="flex items-center gap-3 px-4 py-2 hover:bg-zm-hover transition-colors"
+                  >
+                    <Avatar src={p.avatar} alt="" className="w-9 h-9 shrink-0" />
+                    <span className="min-w-0">
+                      <span className="text-sm font-medium block truncate">{p.name}</span>
+                      {workLocation && (
+                        <span className="text-xs text-zm-muted block truncate">{workLocation}</span>
+                      )}
+                      {extra && <span className="text-xs text-zm-muted block truncate">{extra}</span>}
+                    </span>
+                  </Link>
+                );
+              })}
             </div>
           )}
 
@@ -157,6 +177,19 @@ export default function SearchBar() {
                 </div>
               ))}
             </div>
+          )}
+
+          {!searching && hasResults && (
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                navigate(`/search?q=${encodeURIComponent(q)}`);
+              }}
+              className="w-full min-h-11 flex items-center justify-center text-sm font-semibold text-zm-blue-light hover:bg-zm-hover border-t border-zm-border transition-colors"
+            >
+              Xem tất cả kết quả cho "{q}"
+            </button>
           )}
         </div>
       )}
