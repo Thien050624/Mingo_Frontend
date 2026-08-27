@@ -5,6 +5,7 @@ import { useCurrentUser } from "../context/UserContext";
 import { useToast } from "../context/ToastContext";
 import * as friendsApi from "../api/friends";
 import Avatar from "../components/common/Avatar";
+import { SlowLoadBanner } from "../components/common/LoadingIndicator";
 
 export default function SettingsAccount() {
   const { currentUser, changeEmail, changePassword, deleteAccount } = useCurrentUser();
@@ -275,7 +276,10 @@ export default function SettingsAccount() {
             <FaUserSlash size={14} className="text-zm-muted" aria-hidden="true" /> Người dùng đã chặn
           </h2>
           {blockedLoading ? (
-            <p className="text-sm text-zm-muted">Đang tải...</p>
+            <div>
+              <p className="text-sm text-zm-muted">Đang tải...</p>
+              <SlowLoadBanner className="text-left mt-1" />
+            </div>
           ) : blockedUsers.length === 0 ? (
             <p className="text-sm text-zm-muted">Bạn chưa chặn người dùng nào.</p>
           ) : (

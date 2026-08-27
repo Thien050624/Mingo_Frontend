@@ -36,6 +36,7 @@ import { formatFileSize } from "../utils/file";
 import { replyPreviewText } from "../api/chat";
 import Avatar from "../components/common/Avatar";
 import AnchoredMenu from "../components/common/AnchoredMenu";
+import { SlowLoadBanner } from "../components/common/LoadingIndicator";
 import ImageLightbox from "../components/common/ImageLightbox";
 import MessageAttachment from "../components/chat/MessageAttachment";
 import ChatSkeleton from "../components/chat/ChatSkeleton";
@@ -259,7 +260,12 @@ export default function Chat() {
   );
 
   if (loading) {
-    return <ChatSkeleton />;
+    return (
+      <>
+        <SlowLoadBanner className="mb-3" />
+        <ChatSkeleton />
+      </>
+    );
   }
 
   const switchConversation = (id) => {

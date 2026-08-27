@@ -5,6 +5,7 @@ import * as usersApi from "../api/users";
 import * as postsApi from "../api/posts";
 import * as friendsApi from "../api/friends";
 import Avatar from "../components/common/Avatar";
+import LoadingIndicator from "../components/common/LoadingIndicator";
 import PostCard from "../components/feed/PostCard";
 
 const PAGE_SIZE = 10;
@@ -157,7 +158,9 @@ export default function SearchResults() {
       <div className="bg-zm-card rounded-2xl border border-zm-border p-4 mb-5">
         <h2 className="font-bold text-sm text-zm-muted uppercase tracking-wide mb-2">Người dùng</h2>
         {loadingUsers ? (
-          <p className="py-6 text-center text-sm text-zm-muted">Đang tải...</p>
+          <div className="py-6">
+            <LoadingIndicator />
+          </div>
         ) : users.length === 0 ? (
           <p className="py-6 text-center text-sm text-zm-muted">Không tìm thấy người dùng nào.</p>
         ) : (
@@ -209,8 +212,8 @@ export default function SearchResults() {
       <div>
         <h2 className="font-bold text-sm text-zm-muted uppercase tracking-wide mb-2 px-1">Bài viết</h2>
         {loadingPosts ? (
-          <div className="bg-zm-card rounded-2xl border border-zm-border p-6 text-center text-sm text-zm-muted">
-            Đang tải...
+          <div className="bg-zm-card rounded-2xl border border-zm-border p-6">
+            <LoadingIndicator />
           </div>
         ) : posts.length === 0 ? (
           <div className="bg-zm-card rounded-2xl border border-zm-border p-6 text-center text-sm text-zm-muted">

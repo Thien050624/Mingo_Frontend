@@ -27,6 +27,7 @@ import PostCard from "../components/feed/PostCard";
 import Avatar from "../components/common/Avatar";
 import AnchoredMenu from "../components/common/AnchoredMenu";
 import ProfileSkeleton from "../components/common/ProfileSkeleton";
+import { SlowLoadBanner } from "../components/common/LoadingIndicator";
 
 const tabs = ["Bài viết", "Giới thiệu", "Bạn bè", "Hình ảnh"];
 // Static (not interpolated) so Tailwind's JIT scanner can find these literal class names at build time.
@@ -186,7 +187,12 @@ export default function Profile() {
   };
 
   if (loading) {
-    return <ProfileSkeleton />;
+    return (
+      <>
+        <SlowLoadBanner className="mb-3" />
+        <ProfileSkeleton />
+      </>
+    );
   }
 
   if (!profileUser) {

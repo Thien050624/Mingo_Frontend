@@ -13,6 +13,7 @@ import {
 import { useNotifications } from "../context/NotificationContext";
 import Avatar from "../components/common/Avatar";
 import NotificationsSkeleton from "../components/layout/NotificationsSkeleton";
+import { SlowLoadBanner } from "../components/common/LoadingIndicator";
 
 const iconFor = (type) => {
   switch (type) {
@@ -51,7 +52,12 @@ export default function Notifications() {
   const [confirmingDeleteAll, setConfirmingDeleteAll] = useState(false);
 
   if (loading) {
-    return <NotificationsSkeleton />;
+    return (
+      <>
+        <SlowLoadBanner className="mb-3" />
+        <NotificationsSkeleton />
+      </>
+    );
   }
 
   const openNotification = (n) => {

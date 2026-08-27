@@ -4,6 +4,8 @@ import { FaEnvelope, FaLock } from "react-icons/fa";
 import TextField from "../components/common/TextField";
 import { useCurrentUser } from "../context/UserContext";
 import { useToast } from "../context/ToastContext";
+import useSlowLoad from "../hooks/useSlowLoad";
+import LoadingIndicator from "../components/common/LoadingIndicator";
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
@@ -16,8 +18,10 @@ export default function Login() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [googleSubmitting, setGoogleSubmitting] = useState(false);
   const navigate = useNavigate();
   const googleButtonRef = useRef(null);
+  const submitSlow = useSlowLoad(submitting);
 
   const switchMode = (next) => {
     setMode(next);
@@ -54,11 +58,14 @@ export default function Login() {
 
   const handleGoogleCredential = async (response) => {
     setError("");
+    setGoogleSubmitting(true);
     try {
       const user = await loginWithGoogle(response.credential);
       afterAuthenticated(user, "Đăng nhập thành công");
     } catch (err) {
       setError(err.message || "Đã có lỗi xảy ra, vui lòng thử lại sau");
+    } finally {
+      setGoogleSubmitting(false);
     }
   };
 
@@ -199,7 +206,13 @@ export default function Login() {
               disabled={submitting}
               className="bg-gradient-to-r from-zm-blue to-zm-blue-light disabled:opacity-60 hover:opacity-90 text-white font-bold rounded-lg py-2.5 text-sm mt-2 transition-opacity"
             >
-              {submitting ? "Đang xử lý..." : mode === "login" ? "Đăng nhập" : "Đăng ký"}
+              {submitting
+                ? submitSlow
+                  ? "Máy chủ đang khởi động, vui lòng đợi thêm ít giây..."
+                  : "Đang xử lý..."
+                : mode === "login"
+                ? "Đăng nhập"
+                : "Đăng ký"}
             </button>
           </form>
 
@@ -210,7 +223,14 @@ export default function Login() {
           </div>
 
           {GOOGLE_CLIENT_ID ? (
-            <div ref={googleButtonRef} className="flex justify-center min-h-11" />
+            <div className="relative min-h-11">
+              <div ref={googleButtonRef} className={`flex justify-center min-h-11 ${googleSubmitting ? "invisible" : ""}`} />
+              {googleSubmitting && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <LoadingIndicator text="Đang đăng nhập bằng Google..." />
+                </div>
+              )}
+            </div>
           ) : (
             <button
               type="button"

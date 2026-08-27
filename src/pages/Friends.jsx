@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { FaUserPlus, FaCheck, FaTimes, FaUserFriends, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import * as friendsApi from "../api/friends";
 import Avatar from "../components/common/Avatar";
+import LoadingIndicator from "../components/common/LoadingIndicator";
 
 function AvatarRing({ src, alt, size = 44 }) {
   return (
@@ -72,8 +73,8 @@ export default function Friends() {
   if (loading) {
     return (
       <div className="max-w-4xl mx-auto">
-        <div className="bg-zm-card rounded-2xl border border-zm-border p-8 text-center text-zm-muted text-sm">
-          Đang tải...
+        <div className="bg-zm-card rounded-2xl border border-zm-border p-8">
+          <LoadingIndicator />
         </div>
       </div>
     );

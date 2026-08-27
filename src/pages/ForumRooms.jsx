@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { FaComments, FaPlus, FaTimes } from "react-icons/fa";
 import * as forumApi from "../api/forum";
 import Avatar from "../components/common/Avatar";
+import { SlowLoadBanner } from "../components/common/LoadingIndicator";
 
 export default function ForumRooms() {
   const [rooms, setRooms] = useState([]);
@@ -73,11 +74,14 @@ export default function ForumRooms() {
       )}
 
       {loading ? (
-        <div className="grid sm:grid-cols-2 gap-4">
-          {[0, 1, 2, 3].map((i) => (
-            <div key={i} className="bg-zm-card rounded-2xl border border-zm-border p-4 h-24 animate-pulse" />
-          ))}
-        </div>
+        <>
+          <SlowLoadBanner className="mb-3" />
+          <div className="grid sm:grid-cols-2 gap-4">
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className="bg-zm-card rounded-2xl border border-zm-border p-4 h-24 animate-pulse" />
+            ))}
+          </div>
+        </>
       ) : rooms.length === 0 && !error ? (
         <div className="bg-zm-card rounded-2xl border border-zm-border p-10 text-center">
           <FaComments className="mx-auto text-zm-muted mb-3" size={28} aria-hidden="true" />

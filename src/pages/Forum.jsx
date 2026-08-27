@@ -23,6 +23,7 @@ import AnchoredMenu from "../components/common/AnchoredMenu";
 import ImageLightbox from "../components/common/ImageLightbox";
 import MessageAttachment from "../components/chat/MessageAttachment";
 import ForumRoomSkeleton from "../components/forum/ForumRoomSkeleton";
+import { SlowLoadBanner } from "../components/common/LoadingIndicator";
 
 const reportReasons = ["Spam", "Nội dung không phù hợp", "Quấy rối / thù ghét", "Khác"];
 
@@ -195,7 +196,10 @@ function ForumRoomView() {
   return (
     <div className="max-w-4xl mx-auto">
       {loading ? (
-        <ForumRoomSkeleton />
+        <>
+          <SlowLoadBanner className="mb-3" />
+          <ForumRoomSkeleton />
+        </>
       ) : (
         <div className="bg-zm-card rounded-2xl border border-zm-border overflow-hidden flex flex-col h-[calc(100vh-17rem)] lg:h-[calc(100vh-13rem)]">
           <div className="relative shrink-0" ref={msgSearchRef}>

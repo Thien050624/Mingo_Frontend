@@ -4,6 +4,7 @@ import PostComposer from "../components/feed/PostComposer";
 import PostCard from "../components/feed/PostCard";
 import PostCardSkeleton from "../components/feed/PostCardSkeleton";
 import ForumHighlights from "../components/forum/ForumHighlights";
+import { SlowLoadBanner } from "../components/common/LoadingIndicator";
 import * as postsApi from "../api/posts";
 
 export default function Home() {
@@ -61,6 +62,7 @@ export default function Home() {
 
       {loading ? (
         <>
+          <SlowLoadBanner className="mb-3" />
           <PostCardSkeleton />
           <PostCardSkeleton />
           <PostCardSkeleton />

@@ -1,10 +1,11 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useCurrentUser } from "../../context/UserContext";
+import LoadingIndicator from "../common/LoadingIndicator";
 
 function LoadingScreen() {
   return (
     <div className="min-h-screen bg-zm-bg flex items-center justify-center">
-      <span className="text-sm text-zm-muted">Đang tải...</span>
+      <LoadingIndicator />
     </div>
   );
 }

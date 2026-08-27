@@ -1,6 +1,7 @@
 import { FaBookmark } from "react-icons/fa";
 import { useSaved } from "../context/SavedContext";
 import PostCard from "../components/feed/PostCard";
+import LoadingIndicator from "../components/common/LoadingIndicator";
 
 export default function Saved() {
   const { savedPosts, loading, hasMore, loadingMore, loadMore } = useSaved();
@@ -8,8 +9,8 @@ export default function Saved() {
   return (
     <div className="max-w-4xl mx-auto">
       {loading ? (
-        <div className="bg-zm-card rounded-2xl border border-zm-border p-10 text-center text-sm text-zm-muted">
-          Đang tải...
+        <div className="bg-zm-card rounded-2xl border border-zm-border p-10">
+          <LoadingIndicator />
         </div>
       ) : savedPosts.length === 0 ? (
         <div className="bg-zm-card rounded-2xl border border-zm-border p-10 text-center">

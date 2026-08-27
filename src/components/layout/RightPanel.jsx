@@ -4,6 +4,7 @@ import { FaUserPlus, FaUserFriends, FaChevronLeft, FaChevronRight } from "react-
 import * as friendsApi from "../../api/friends";
 import { usePresence } from "../../context/PresenceContext";
 import Avatar from "../common/Avatar";
+import { SlowLoadBanner } from "../common/LoadingIndicator";
 
 const SUGGESTIONS_PAGE_SIZE = 5;
 
@@ -44,7 +45,12 @@ export default function RightPanel() {
           <FaUserFriends className="text-zm-blue-light" size={12} aria-hidden="true" /> Gợi ý kết bạn
         </h3>
         <div className="flex flex-col gap-1">
-          {loading && <p className="text-xs text-zm-muted px-1 py-2">Đang tải...</p>}
+          {loading && (
+            <div className="px-1 py-2">
+              <p className="text-xs text-zm-muted">Đang tải...</p>
+              <SlowLoadBanner className="text-left mt-1" />
+            </div>
+          )}
           {!loading && suggestions.length === 0 && (
             <p className="text-xs text-zm-muted px-1 py-2">Chưa có gợi ý kết bạn nào.</p>
           )}
