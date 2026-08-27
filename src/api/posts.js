@@ -20,10 +20,10 @@ export const updatePost = (postId, { content, images, visibility }) =>
 export const deletePost = (postId) =>
   request(`/posts/${postId}`, { method: "DELETE", token: token() });
 
-export const addComment = (postId, content, parentCommentId) =>
+export const addComment = (postId, content, parentCommentId, imageUrl) =>
   request(`/posts/${postId}/comments`, {
     method: "POST",
-    body: { content, parentCommentId },
+    body: { content, parentCommentId, imageUrl },
     token: token(),
   });
 
@@ -32,6 +32,12 @@ export const likeComment = (postId, commentId) =>
 
 export const unlikeComment = (postId, commentId) =>
   request(`/posts/${postId}/comments/${commentId}/like`, { method: "DELETE", token: token() });
+
+export const reportComment = (postId, commentId, reason) =>
+  request(`/posts/${postId}/comments/${commentId}/report`, { method: "POST", body: { reason }, token: token() });
+
+export const unreportComment = (postId, commentId) =>
+  request(`/posts/${postId}/comments/${commentId}/report`, { method: "DELETE", token: token() });
 
 export const setReaction = (postId, type) =>
   request(`/posts/${postId}/reaction`, { method: "PUT", body: { type }, token: token() });
@@ -78,9 +84,11 @@ function toFrontendComment(c) {
     id: c.id,
     author: { id: c.author.id, name: c.author.name, avatar: c.author.avatar },
     content: c.content,
+    imageUrl: c.imageUrl,
     time: formatRelativeTime(c.createdAt),
     likeCount: c.likeCount,
     likedByMe: c.likedByMe,
+    reportedByMe: !!c.reportedByMe,
     replies: (c.replies || []).map(toFrontendComment),
   };
 }

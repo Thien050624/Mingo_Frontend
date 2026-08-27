@@ -4,10 +4,6 @@ import {
   FaThumbsUp,
   FaComment,
   FaEllipsisH,
-  FaGlobeAsia,
-  FaUserFriends,
-  FaLock,
-  FaPaperPlane,
   FaBookmark,
   FaRegBookmark,
   FaFlag,
@@ -22,6 +18,8 @@ import {
   FaVideo,
 } from "react-icons/fa";
 import { reactionIcons, reactionKeys } from "../../data/mockData";
+import { visibilityMeta, visibilityOptions } from "../../data/postVisibility";
+import { reportReasons } from "../../data/reportReasons";
 import { useCurrentUser } from "../../context/UserContext";
 import { useToast } from "../../context/ToastContext";
 import { useSaved } from "../../context/SavedContext";
@@ -29,21 +27,10 @@ import * as postsApi from "../../api/posts";
 import * as uploadsApi from "../../api/uploads";
 import { isVideoFile, isVideoUrl } from "../../utils/media";
 import PostImageGrid from "./PostImageGrid";
+import PostComments from "./PostComments";
 import Avatar from "../common/Avatar";
 import AnchoredMenu from "../common/AnchoredMenu";
 import BottomSheet from "../common/BottomSheet";
-
-const visibilityMeta = {
-  PUBLIC: { icon: FaGlobeAsia, label: "Công khai" },
-  FRIENDS: { icon: FaUserFriends, label: "Bạn bè" },
-  PRIVATE: { icon: FaLock, label: "Chỉ mình tôi" },
-};
-
-const visibilityOptions = [
-  { value: "PUBLIC", ...visibilityMeta.PUBLIC },
-  { value: "FRIENDS", ...visibilityMeta.FRIENDS },
-  { value: "PRIVATE", ...visibilityMeta.PRIVATE },
-];
 
 const reactionLabels = {
   like: "Thích",
@@ -53,8 +40,6 @@ const reactionLabels = {
   sad: "Buồn",
   angry: "Phẫn nộ",
 };
-
-const reportReasons = ["Spam", "Nội dung không phù hợp", "Quấy rối / thù ghét", "Khác"];
 
 export default function PostCard({ post, onUpdated, onDeleted }) {
   const [reactions, setReactions] = useState(post.reactions);
@@ -232,18 +217,19 @@ export default function PostCard({ post, onUpdated, onDeleted }) {
 
   const toggleLike = () => pick(myReaction ? myReaction : "like");
 
-  const submitComment = async () => {
+  const submitComment = async (imageUrl) => {
     if (!commentText.trim()) return;
     const text = commentText;
     setCommentText("");
     try {
-      const created = await postsApi.addComment(post.id, text);
+      const created = await postsApi.addComment(post.id, text, undefined, imageUrl);
       setComments((prev) => [
         ...prev,
         {
           id: created.id,
           author: created.author,
           content: created.content,
+          imageUrl: created.imageUrl,
           time: "Vừa xong",
           likeCount: 0,
           likedByMe: false,
@@ -288,6 +274,28 @@ export default function PostCard({ post, onUpdated, onDeleted }) {
         likedByMe: wasLiked,
         likeCount: c.likeCount + (wasLiked ? 1 : -1),
       }));
+    }
+  };
+
+  const reportComment = async (commentId, reason) => {
+    updateCommentInState(commentId, (c) => ({ ...c, reportedByMe: true }));
+    try {
+      await postsApi.reportComment(post.id, commentId, reason);
+      showToast("Đã gửi báo cáo, cảm ơn bạn");
+    } catch (err) {
+      updateCommentInState(commentId, (c) => ({ ...c, reportedByMe: false }));
+      showToast(err.message || "Không thể báo cáo bình luận", "error");
+    }
+  };
+
+  const unreportComment = async (commentId) => {
+    updateCommentInState(commentId, (c) => ({ ...c, reportedByMe: false }));
+    try {
+      await postsApi.unreportComment(post.id, commentId);
+      showToast("Đã gỡ báo cáo");
+    } catch (err) {
+      updateCommentInState(commentId, (c) => ({ ...c, reportedByMe: true }));
+      showToast(err.message || "Không thể gỡ báo cáo", "error");
     }
   };
 
@@ -679,7 +687,25 @@ export default function PostCard({ post, onUpdated, onDeleted }) {
           {post.content && (
             <p className="px-3 pb-2 text-sm whitespace-pre-line leading-relaxed">{post.content}</p>
           )}
-          <PostImageGrid images={post.images} authorName={post.author.name} />
+          <PostImageGrid
+            images={post.images}
+            post={post}
+            commentsProps={{
+              comments,
+              currentUser,
+              commentText,
+              setCommentText,
+              submitComment,
+              replyingTo,
+              setReplyingTo,
+              replyText,
+              setReplyText,
+              submitReply,
+              toggleCommentLike,
+              reportComment,
+              unreportComment,
+            }}
+          />
         </>
       )}
 
@@ -763,117 +789,22 @@ export default function PostCard({ post, onUpdated, onDeleted }) {
 
       {showComments && (
         <div className="px-3 pb-3 pt-1 border-t border-zm-border">
-          <div className="flex flex-col gap-2 mt-2">
-            {comments.map((c) => (
-              <div key={c.id} className="flex flex-col gap-2">
-                <div className="flex items-start gap-2">
-                  <Link to={`/profile/${c.author.id}`} className="shrink-0">
-                    <Avatar src={c.author.avatar} alt={`Ảnh đại diện của ${c.author.name}`} className="w-8 h-8" />
-                  </Link>
-                  <div>
-                    <div className="bg-zm-bg border border-zm-border rounded-2xl px-3 py-1.5 inline-block">
-                      <Link to={`/profile/${c.author.id}`} className="text-xs font-semibold text-zm-blue-light hover:underline">
-                        {c.author.name}
-                      </Link>
-                      <p className="text-sm">{c.content}</p>
-                    </div>
-                    <div className="flex items-center gap-3 px-3 mt-0.5 text-xs text-zm-muted">
-                      <button
-                        type="button"
-                        onClick={() => toggleCommentLike(c)}
-                        className={`font-semibold hover:text-zm-blue-light ${c.likedByMe ? "text-zm-blue-light" : ""}`}
-                      >
-                        Thích{c.likeCount > 0 ? ` (${c.likeCount})` : ""}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setReplyingTo(replyingTo === c.id ? null : c.id)}
-                        className="font-semibold hover:text-zm-blue-light"
-                      >
-                        Phản hồi
-                      </button>
-                      <span>{c.time}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {(c.replies || []).map((r) => (
-                  <div key={r.id} className="flex items-start gap-2 ml-10">
-                    <Link to={`/profile/${r.author.id}`} className="shrink-0">
-                      <Avatar src={r.author.avatar} alt={`Ảnh đại diện của ${r.author.name}`} className="w-7 h-7" />
-                    </Link>
-                    <div>
-                      <div className="bg-zm-bg border border-zm-border rounded-2xl px-3 py-1.5 inline-block">
-                        <Link to={`/profile/${r.author.id}`} className="text-xs font-semibold text-zm-blue-light hover:underline">
-                          {r.author.name}
-                        </Link>
-                        <p className="text-sm">{r.content}</p>
-                      </div>
-                      <div className="flex items-center gap-3 px-3 mt-0.5 text-xs text-zm-muted">
-                        <button
-                          type="button"
-                          onClick={() => toggleCommentLike(r)}
-                          className={`font-semibold hover:text-zm-blue-light ${r.likedByMe ? "text-zm-blue-light" : ""}`}
-                        >
-                          Thích{r.likeCount > 0 ? ` (${r.likeCount})` : ""}
-                        </button>
-                        <span>{r.time}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-
-                {replyingTo === c.id && (
-                  <div className="flex items-center gap-2 ml-10">
-                    <Avatar src={currentUser.avatar} alt="" className="w-7 h-7 shrink-0" />
-                    <div className="flex-1 min-w-0 flex items-center bg-zm-bg border border-zm-border rounded-full pl-3 pr-1">
-                      <input
-                        autoFocus
-                        value={replyText}
-                        onChange={(e) => setReplyText(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && submitReply(c.id)}
-                        aria-label="Viết phản hồi"
-                        placeholder={`Phản hồi ${c.author.name}...`}
-                        className="flex-1 min-w-0 bg-transparent outline-none text-sm py-1.5 placeholder-zm-muted"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => submitReply(c.id)}
-                        disabled={!replyText.trim()}
-                        aria-label="Gửi phản hồi"
-                        className="w-11 h-11 flex items-center justify-center shrink-0 text-zm-blue-light disabled:text-zm-muted"
-                      >
-                        <FaPaperPlane size={12} aria-hidden="true" />
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-
-          <div className="flex items-center gap-2 mt-3">
-            <Avatar src={currentUser.avatar} alt="" className="w-8 h-8 shrink-0" />
-            <div className="flex-1 min-w-0 flex items-center bg-zm-bg border border-zm-border rounded-full pl-3 pr-1">
-              <input
-                value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && submitComment()}
-                aria-label="Viết bình luận"
-                placeholder="Viết bình luận..."
-                className="flex-1 min-w-0 bg-transparent outline-none text-sm py-2 placeholder-zm-muted"
-              />
-              <button
-                type="button"
-                onClick={submitComment}
-                disabled={!commentText.trim()}
-                aria-label="Gửi bình luận"
-                className="w-11 h-11 flex items-center justify-center shrink-0 text-zm-blue-light disabled:text-zm-muted"
-              >
-                <FaPaperPlane size={13} aria-hidden="true" />
-              </button>
-            </div>
-          </div>
+          <PostComments
+            comments={comments}
+            currentUser={currentUser}
+            commentText={commentText}
+            setCommentText={setCommentText}
+            submitComment={submitComment}
+            replyingTo={replyingTo}
+            setReplyingTo={setReplyingTo}
+            replyText={replyText}
+            setReplyText={setReplyText}
+            submitReply={submitReply}
+            toggleCommentLike={toggleCommentLike}
+            reportComment={reportComment}
+            unreportComment={unreportComment}
+            variant="inline"
+          />
         </div>
       )}
     </article>
