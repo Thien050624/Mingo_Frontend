@@ -6,8 +6,9 @@ import { visibilityMeta } from "../../data/postVisibility";
 import Avatar from "./Avatar";
 import PostComments from "../feed/PostComments";
 
-export default function ImageLightbox({ images, index, onClose, onNavigate, post, commentsProps }) {
+export default function ImageLightbox({ images, index, onClose, onNavigate, post = null, commentsProps = null }) {
   const hasMultiple = images.length > 1;
+  const showComments = !!post && !!commentsProps;
 
   useEffect(() => {
     const onKeyDown = (e) => {
@@ -21,13 +22,15 @@ export default function ImageLightbox({ images, index, onClose, onNavigate, post
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [onClose, onNavigate, hasMultiple, index, images.length]);
 
-  const meta = visibilityMeta[post.visibility] || visibilityMeta.PUBLIC;
-  const VisibilityIcon = meta.icon;
+  const meta = showComments ? visibilityMeta[post.visibility] || visibilityMeta.PUBLIC : null;
+  const VisibilityIcon = meta?.icon;
   const currentImageUrl = images[index];
-  const imageComments = commentsProps.comments.filter((c) => c.imageUrl === currentImageUrl);
+  const imageComments = showComments
+    ? commentsProps.comments.filter((c) => c.imageUrl === currentImageUrl)
+    : [];
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col sm:flex-row bg-black/95">
+    <div className={`fixed inset-0 z-[60] flex flex-col bg-black/95 ${showComments ? "sm:flex-row" : ""}`}>
       <button
         type="button"
         onClick={onClose}
@@ -91,38 +94,40 @@ export default function ImageLightbox({ images, index, onClose, onNavigate, post
         )}
       </div>
 
-      <div
-        className="w-full sm:w-96 shrink-0 min-h-0 max-h-[45vh] sm:max-h-none bg-zm-card border-t sm:border-t-0 sm:border-l border-zm-border flex flex-col"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center gap-2.5 p-3 border-b border-zm-border shrink-0">
-          <Link to={`/profile/${post.author.id}`} className="shrink-0">
-            <Avatar src={post.author.avatar} alt={`Ảnh đại diện của ${post.author.name}`} className="w-9 h-9" />
-          </Link>
-          <div className="min-w-0">
-            <Link
-              to={`/profile/${post.author.id}`}
-              className="font-semibold text-sm hover:text-zm-blue-light truncate transition-colors block"
-            >
-              {post.author.name}
+      {showComments && (
+        <div
+          className="w-full sm:w-96 shrink-0 min-h-0 max-h-[45vh] sm:max-h-none bg-zm-card border-t sm:border-t-0 sm:border-l border-zm-border flex flex-col"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center gap-2.5 p-3 border-b border-zm-border shrink-0">
+            <Link to={`/profile/${post.author.id}`} className="shrink-0">
+              <Avatar src={post.author.avatar} alt={`Ảnh đại diện của ${post.author.name}`} className="w-9 h-9" />
             </Link>
-            <div className="flex items-center gap-1 text-xs text-zm-muted">
-              <span>{post.time}</span>
-              <VisibilityIcon size={9} aria-label={meta.label} title={meta.label} />
+            <div className="min-w-0">
+              <Link
+                to={`/profile/${post.author.id}`}
+                className="font-semibold text-sm hover:text-zm-blue-light truncate transition-colors block"
+              >
+                {post.author.name}
+              </Link>
+              <div className="flex items-center gap-1 text-xs text-zm-muted">
+                <span>{post.time}</span>
+                <VisibilityIcon size={9} aria-label={meta.label} title={meta.label} />
+              </div>
             </div>
           </div>
-        </div>
-        {post.content && (
-          <p className="px-3 pt-2 text-sm whitespace-pre-line leading-relaxed shrink-0">{post.content}</p>
-        )}
+          {post.content && (
+            <p className="px-3 pt-2 text-sm whitespace-pre-line leading-relaxed shrink-0">{post.content}</p>
+          )}
 
-        <PostComments
-          {...commentsProps}
-          comments={imageComments}
-          submitComment={() => commentsProps.submitComment(currentImageUrl)}
-          variant="panel"
-        />
-      </div>
+          <PostComments
+            {...commentsProps}
+            comments={imageComments}
+            submitComment={() => commentsProps.submitComment(currentImageUrl)}
+            variant="panel"
+          />
+        </div>
+      )}
     </div>
   );
 }
